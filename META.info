@@ -7,6 +7,7 @@
   "provides" : {
     "Data::Dump" : "lib/Data/Dump.pm6"
   },
+  "depends": [ ],
   "test-depends" : [
     "Test"
   ],
