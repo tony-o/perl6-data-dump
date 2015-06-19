@@ -1,7 +1,6 @@
 {
   "name" : "Data::Dump",
   "support" : {
-    "source" : "https://github.com/tony-o/perl6-data-dump.git"
   },
   "perl" : "v6",
   "provides" : {
