@@ -26,7 +26,7 @@ output:
 ```
 note: if you have Term::ANSIColor installed then it's going to be amazing. so, prepare yourself.
 
-## oh you want to your custom class?
+## oh you want to ```Dump``` your custom class?
 
 here you go, dude
 
