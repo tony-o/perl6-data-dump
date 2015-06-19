@@ -2,9 +2,8 @@ module Data::Dump {
   my $colorizor = sub (Str $s) { '' };
   
   {
-    need Term::ANSIColor;
-    import Term::ANSIColor;
-    $colorizor = &color;
+    require Term::ANSIColor;
+    $colorizor = GLOBAL::Term::ANSIColor::EXPORT::DEFAULT::<&color>;
   }
 
   sub key ($o) {
