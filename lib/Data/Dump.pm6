@@ -64,7 +64,7 @@ module Data::Dump {
         $out ~= Dump($attr.get_value($obj), :$indent, ilevel => $ilevel+1).trim ~ ",\n";
       }
 
-      $out ~= "\n";
+      $out ~= "\n" if @attrs.elems > 0;
       for @meths -> $meth {
         my $sig = $meth.signature.params[1..*-2].map({ 
           .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! ''); 
