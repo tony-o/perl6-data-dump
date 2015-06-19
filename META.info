@@ -1,0 +1,16 @@
+{
+  "name" : "Data::Dump",
+  "support" : {
+    "source" : "https://github.com/tony-o/perl6-data-dump.git"
+  },
+  "perl" : "v6",
+  "provides" : {
+    "Data::Dump" : "lib/Data/Dump.pm6"
+  },
+  "test-depends" : [
+    "Test",
+    "lib"
+  ],
+  "description" : "a colorful? data dumper for perl6",
+  "version" : "v0.0.1"
+}
