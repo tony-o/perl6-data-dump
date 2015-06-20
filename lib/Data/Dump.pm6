@@ -68,7 +68,7 @@ module Data::Dump {
       for @meths -> $meth {
         my $sig = $meth.signature.params[1..*-2].map({ 
           .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! ''); 
-        }).join(', ');
+        }).join(sym(', '));
 
         $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
       } 
