@@ -42,7 +42,6 @@ module Data::Dump {
       $out ~= "{$space}{sym('}')}\n";
     } elsif $obj.WHAT ~~ List {
       $out ~= "{$space}{sym('[')}\n";
-      'here'.say;
       for @($obj) -> $o {
         $out ~= Dump($o, :$indent, ilevel => $ilevel+1).trim-trailing ~ ",\n"; 
       }
