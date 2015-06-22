@@ -60,7 +60,7 @@ module Data::Dump {
 
       for @attrs -> $attr {
         $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - $attr.Str.chars) } => ";
-        $out ~= Dump($attr.get_value($obj), :$indent, ilevel => $ilevel+1).trim ~ ",\n";
+        $out ~= ( try { Dump($attr.get_value($obj), :$indent, ilevel => $ilevel+1).trim } // 'undefined') ~ ",\n";
       }
 
       $out ~= "\n" if @attrs.elems > 0;
