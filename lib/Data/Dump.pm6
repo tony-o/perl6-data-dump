@@ -22,7 +22,8 @@ module Data::Dump {
     return $colorizor("yellow") ~ $o ~ $colorizor("reset");
   }
 
-  sub Dump ($obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True) is export {
+  sub Dump ($obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50) is export {
+    return '...' if $max-recursion == $ilevel;
     temp $colorizor = sub (Str $s) { '' } unless $color;
     try {
       require 'Term::ANSIColor';
@@ -34,18 +35,18 @@ module Data::Dump {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max; 
 
-      $out ~= "{$space}{sym('{')}\n";
+      $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
         $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
-        $out ~= Dump($obj{$key}, :$indent, ilevel => $ilevel+1).trim ~ ",\n";
+        $out ~= (try { Dump($obj{$key}, :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
       }
-      $out ~= "{$space}{sym('}')}\n";
+      $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
     } elsif $obj.WHAT ~~ List {
-      $out ~= "{$space}{sym('[')}\n";
+      $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
       for @($obj) -> $o {
-        $out ~= Dump($o, :$indent, ilevel => $ilevel+1).trim-trailing ~ ",\n"; 
+        $out ~= Dump($o, :$max-recursion, :$indent, ilevel => $ilevel+1).trim-trailing ~ ",\n"; 
       }
-      $out ~= "{$space}{sym(']')}\n";
+      $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
     } elsif $obj.WHAT ~~ any(Int, Str, Rat) {
       my $what = $obj.WHAT.^name;
       $out ~= "{$space}{val($obj.perl // '<undef>')}\.{what($what)}\n";
@@ -60,8 +61,8 @@ module Data::Dump {
 
       for @attrs -> $attr {
         $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - $attr.Str.chars) } => ";
-        $out ~= ( try { Dump($attr.get_value($obj), :$indent, ilevel => $ilevel+1).trim } // 
-                  try { Dump($attr.hash, :$indent, ilevel => $ilevel+1).trim } //
+        $out ~= ( try { Dump($attr.get_value($obj), :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } // 
+                  try { Dump($attr.hash, :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } //
                   'undefined') ~ ",\n";
       }
 

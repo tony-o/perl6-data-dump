@@ -6,6 +6,28 @@ that's right folks, here's a quicky for your data dump needs.  if you have Term:
 
 feel free to submit bugs or make suggestions, if you submit a bug please provide a concise example that replicates the problem and i'll add some tests and make this thing better.
 
+## options
+
+### `indent`
+
+default: `2`
+
+```perl6
+<...>
+say Dump({ some => object }, :indent(4));
+<...>
+```
+
+### `max-recursion`
+
+default: `50`
+
+```perl6
+<...>
+say Dump({ some => object }, :max-recursion(3));
+<...>
+```
+
 ## usage
 
 ```perl6
