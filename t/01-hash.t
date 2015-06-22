@@ -19,4 +19,4 @@ my $out = Dump(%(
 ), :color(False));
 
 
-ok $out eq "\{\n  a    => \"a\".Str,\n  b    => \"b\".Str,\n  hash => \{\n    a             => \"a\".Str,\n    b             => \"b\".Str,\n    hash          => \{\n      a => \"a\".Str,\n      b => 5.Int,\n    },\n    reallylongkey => \"key\".Str,\n  },\n}\n";
+ok $out eq "\{\n  a    => \"a\".Str,\n  b    => \"b\".Str,\n  hash => \{\n    a             => \"a\".Str,\n    b             => \"b\".Str,\n    hash          => \{\n      a => \"a\".Str,\n      b => 5.Int,\n    },\n    reallylongkey => \"key\".Str,\n  },\n}";

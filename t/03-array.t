@@ -9,4 +9,6 @@ my $out = Dump(@(
   { one   => 2 },
 ), :color(False));
 
-ok $out eq "[\n  \{\n    hello => \"world\".Str,\n  },\n  \{\n    one => 2.Int,\n  },\n]\n";
+say $out;
+
+ok $out eq "[\n  \{\n    hello => \"world\".Str,\n  },\n  \{\n    one => 2.Int,\n  },\n]";

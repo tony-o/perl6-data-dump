@@ -37,6 +37,7 @@ module Data::Dump {
       $out ~= "{$space}{sym('{')}\n";
       for @keys -> $key {
         $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
+        say $obj{$key}.WHAT;
         $out ~= Dump($obj{$key}, :$indent, ilevel => $ilevel+1).trim ~ ",\n";
       }
       $out ~= "{$space}{sym('}')}\n";
@@ -74,6 +75,7 @@ module Data::Dump {
 
       $out ~= "{$space}{sym(')')}\n";
     }
-    return $out.trim;
+    $out .=trim if ($ilevel == 0);
+    return $out;
   }
 }
