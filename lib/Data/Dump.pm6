@@ -54,9 +54,9 @@ module Data::Dump {
 
     } else {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
-      my @attrs   = $obj.^attributes.sort({ $^x.Str cmp $^y.Str });
-      my @meths   = $obj.^methods.grep({ .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str });
-      my $spacing = (@attrs.map({ .Str.chars }), @meths.map({ .gist.Str.chars })).max;
+      my @attrs   = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
+      my @meths   = try { $obj.^methods.grep({ .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+      my $spacing = (@attrs.map({ next unless .^can('Str'); .Str.chars }), @meths.map({ next unless .^can('gist'); .gist.Str.chars })).max;
 
       for @attrs -> $attr {
         $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - $attr.Str.chars) } => ";
@@ -74,6 +74,6 @@ module Data::Dump {
 
       $out ~= "{$space}{sym(')')}\n";
     }
-    return $out;
+    return $out.trim;
   }
 }
