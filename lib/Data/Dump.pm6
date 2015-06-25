@@ -1,7 +1,7 @@
 module Data::Dump {
   my $colorizor = sub (Str $s) { '' };
   
-  {
+  try {
     require Term::ANSIColor;
     $colorizor = GLOBAL::Term::ANSIColor::EXPORT::DEFAULT::<&color>;
   }
