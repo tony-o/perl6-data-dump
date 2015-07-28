@@ -16,6 +16,8 @@ class E {
 
 my $out = Dump(E.new, :color(False));
 
-ok $out eq "E :: (\n  \$!private => 5.Int,\n  \$!public  => (Any),\n\n  method e () returns Int \{...},\n  method public () returns Mu \{...},\n  method r (Str \$a) returns Mu \{...},\n  method s (Any \$b, Any :named(\$named) = 5) returns Mu \{...},\n)";
+my $expected = "E :: (\n  \$!private => 5.Int,\n  \$!public  => (Any),\n\n  method e () returns Int \{...},\n  method public () returns Mu \{...},\n  method r (Str \$a) returns Mu \{...},\n  method s (\$b, :\$named = 5) returns Mu \{...},\n)";
+
+ok $out eq $expected, "got expected data structure" or die $out;
 
 # vi:syntax=perl6
