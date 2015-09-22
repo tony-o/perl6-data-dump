@@ -2,8 +2,8 @@ module Data::Dump {
   my $colorizor = sub (Str $s) { '' };
   
   try {
-    require Term::ANSIColor;
-    $colorizor = GLOBAL::Term::ANSIColor::EXPORT::DEFAULT::<&color>;
+    require Terminal::ANSIColor;
+    $colorizor = GLOBAL::Terminal::ANSIColor::EXPORT::DEFAULT::<&color>;
   }
 
   sub key ($o) {
@@ -26,7 +26,7 @@ module Data::Dump {
     return '...' if $max-recursion == $ilevel;
     temp $colorizor = sub (Str $s) { '' } unless $color;
     try {
-      require 'Term::ANSIColor';
+      require 'Terminal::ANSIColor';
     };
     my Str $out   = '';
     my Str $space = (' ' x $indent) x $ilevel;
