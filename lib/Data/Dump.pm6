@@ -47,7 +47,7 @@ module Data::Dump {
         $out ~= Dump($o, :$max-recursion, :$indent, ilevel => $ilevel+1).trim-trailing ~ ",\n"; 
       }
       $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
-    } elsif $obj.WHAT ~~ any(Int, Str, Rat) {
+    } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) {
       my $what = $obj.WHAT.^name;
       $out ~= "{$space}{val($obj.perl // '<undef>')}\.{what($what)}\n";
     } elsif Any ~~ $obj.WHAT {
