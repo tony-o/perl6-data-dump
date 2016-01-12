@@ -34,7 +34,6 @@ module Data::Dump {
     if $obj.WHAT ~~ Hash {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max; 
-
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
         $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
@@ -52,12 +51,14 @@ module Data::Dump {
       $out ~= "{$space}{val($obj.perl // '<undef>')}\.{what($what)}\n";
     } elsif Any ~~ $obj.WHAT {
       $out ~= $space ~ "(Any)\n";
-
+    } elsif Method ~~ $obj.WHAT {
+      $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
     } else {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       my @attrs   = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
       my @meths   = try { $obj.^methods.grep({ .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
       my $spacing = (@attrs.map({ next unless .^can('Str'); .Str.chars }), @meths.map({ next unless .^can('gist'); .gist.Str.chars })).max;
+
 
       for @attrs -> $attr {
         $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - $attr.Str.chars) } => ";
