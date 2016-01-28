@@ -32,6 +32,8 @@ say Dump({ some => object }, :max-recursion(3));
 
 default: `True`
 
+This will override the default decision to use color on the output if `Term::ANSIColor` is installed.  Passing a value of `False` will ensure that the output is vanilla.
+
 ```perl6
 <...>
 say Dump({ some => object }, :color(False));
