@@ -2,7 +2,7 @@
 
 ## for perl6
 
-that's right folks, here's a quicky for your data dump needs.  if you have Term::ANSIColor installed then the output will be so colorful your eyes might bleed.
+that's right folks, here's a quicky for your data dump needs.  if you have Terminal::ANSIColor installed then the output will be so colorful your eyes might bleed.
 
 feel free to submit bugs or make suggestions, if you submit a bug please provide a concise example that replicates the problem and i'll add some tests and make this thing better.
 
@@ -46,7 +46,7 @@ output:
   key256 => 1.Int,
 }
 ```
-note: if you have Term::ANSIColor installed then it's going to be amazing. so, prepare yourself.
+note: if you have Termina::ANSIColor installed then it's going to be amazing. so, prepare yourself.
 
 ## oh you want to ```Dump``` your custom class?
 
