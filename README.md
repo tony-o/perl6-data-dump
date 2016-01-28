@@ -32,7 +32,7 @@ say Dump({ some => object }, :max-recursion(3));
 
 default: `True`
 
-This will override the default decision to use color on the output if `Term::ANSIColor` is installed.  Passing a value of `False` will ensure that the output is vanilla.
+This will override the default decision to use color on the output if `Terminal::ANSIColor` is installed.  Passing a value of `False` will ensure that the output is vanilla.
 
 ```perl6
 <...>
@@ -58,7 +58,7 @@ output:
   key256 => 1.Int,
 }
 ```
-note: if you have Termina::ANSIColor installed then it's going to be amazing. so, prepare yourself.
+note: if you have Terminal::ANSIColor installed then it's going to be amazing. so, prepare yourself.
 
 ## oh you want to ```Dump``` your custom class?
 
