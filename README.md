@@ -28,6 +28,16 @@ say Dump({ some => object }, :max-recursion(3));
 <...>
 ```
 
+### `color`
+
+default: `True`
+
+```perl6
+<...>
+say Dump({ some => object }, :color(False));
+<...>
+```
+
 ## usage
 
 ```perl6
