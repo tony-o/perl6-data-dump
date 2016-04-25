@@ -2,7 +2,7 @@
 
 ## for perl6
 
-that's right folks, here's a quicky for your data dump needs.  if you have Term::ANSIColor installed then the output will be so colorful your eyes might bleed.
+that's right folks, here's a quicky for your data dump needs.  if you have Terminal::ANSIColor installed then the output will be so colorful your eyes might bleed.
 
 feel free to submit bugs or make suggestions, if you submit a bug please provide a concise example that replicates the problem and i'll add some tests and make this thing better.
 
@@ -32,7 +32,7 @@ say Dump({ some => object }, :max-recursion(3));
 
 default: `True`
 
-This will override the default decision to use color on the output if `Term::ANSIColor` is installed.  Passing a value of `False` will ensure that the output is vanilla.
+This will override the default decision to use color on the output if `Terminal::ANSIColor` is installed.  Passing a value of `False` will ensure that the output is vanilla.
 
 ```perl6
 <...>
@@ -70,7 +70,7 @@ output:
   key256 => 1.Int,
 }
 ```
-note: if you have Term::ANSIColor installed then it's going to be amazing. so, prepare yourself.
+note: if you have Terminal::ANSIColor installed then it's going to be amazing. so, prepare yourself.
 
 ## oh you want to ```Dump``` your custom class?
 

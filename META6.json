@@ -2,7 +2,7 @@
   "name" : "Data::Dump",
   "support" : {
   },
-  "perl" : "v6",
+  "perl" : "6.c",
   "provides" : {
     "Data::Dump" : "lib/Data/Dump.pm6"
   },
