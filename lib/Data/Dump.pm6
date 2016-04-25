@@ -146,6 +146,19 @@ This will override the default decision to use color on the output if C<Term::AN
 
 
 
+=head3 C<gist>
+
+default: C<False>
+
+This will override the default object determination and output and use the output of C<.gist>
+
+ perl6
+ <...>
+ say Dump({ some => object }, :gist);
+ <...>
+
+
+
 =head2 usage
 
 ```perl6

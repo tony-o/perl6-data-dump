@@ -40,6 +40,18 @@ say Dump({ some => object }, :color(False));
 <...>
 ```
 
+### `gist`
+
+default: `False`
+
+This will override the default object determination and output and use the output of `.gist`
+
+```perl6
+<...>
+say Dump({ some => object}, :gist);
+<...>
+```
+
 ## usage
 
 ```perl6
