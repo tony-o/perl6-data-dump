@@ -9,8 +9,7 @@ my $out = Dump(%(
   b => %( b => 'b' ),
 ), :color(False), :gist);
 
-
-ok $out eq "Hash :: (\n  a => a, b => b => b,\n)", 'weird hash';
+ok $out eq "Hash :: (\n  \{a => a, b => \{b => b\}\},\n)", 'weird hash';
 
 $out = Dump('foobar' ~~ m/foo(bar)/, :color(False), :gist);
 
