@@ -2,6 +2,7 @@
   "name" : "Data::Dump",
   "support" : {
   },
+  "author": "github:tony-o",
   "perl" : "6.c",
   "provides" : {
     "Data::Dump" : "lib/Data/Dump.pm6"
