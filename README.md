@@ -52,6 +52,18 @@ say Dump({ some => object}, :gist);
 <...>
 ```
 
+### `skip-methods`
+
+default: `False`
+
+This will skip the methods if you dump custom classes.
+
+```perl6
+<...>
+say Dump($object, :skip-methods(True));
+<...>
+```
+
 ## usage
 
 ```perl6
