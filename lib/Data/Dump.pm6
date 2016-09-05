@@ -26,7 +26,7 @@ module Data::Dump {
     return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
   }
 
-  sub Dump ($obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False) is export {
+  sub Dump ($obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
     return '...' if $max-recursion == $ilevel;
     temp $colorizor = sub (Str $s) { '' } unless $color;
     try {
@@ -77,13 +77,15 @@ module Data::Dump {
         }
 
         $out ~= "\n" if @attrs.elems > 0;
-        for @meths -> $meth {
-          my $sig = $meth.signature.params[1..*-2].map({ 
-            .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! ''); 
-          }).join(sym(', ') ~ $colorizor('blue'));
+        if $skip-methods {
+          for @meths -> $meth {
+            my $sig = $meth.signature.params[1..*-2].map({
+              .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
+            }).join(sym(', ') ~ $colorizor('blue'));
 
-          $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
-        } 
+            $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+          }
+        }
       }
 
       $out ~= "{$space}{sym(')')}\n";
