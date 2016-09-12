@@ -77,7 +77,7 @@ module Data::Dump {
         }
 
         $out ~= "\n" if @attrs.elems > 0;
-        if $skip-methods {
+        if !$skip-methods {
           for @meths -> $meth {
             my $sig = $meth.signature.params[1..*-2].map({
               .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
