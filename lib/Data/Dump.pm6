@@ -41,13 +41,13 @@ module Data::Dump {
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
         $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
-        $out ~= (try { Dump($obj{$key}, :$gist, :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
+        $out ~= (try { Dump($obj{$key}, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
       }
       $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
     } elsif $obj.WHAT ~~ List && !$gist {
       $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
       for @($obj) -> $o {
-        $out ~= Dump($o, :$gist, :$max-recursion, :$indent, ilevel => $ilevel+1).trim-trailing ~ ",\n"; 
+        $out ~= Dump($o, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim-trailing ~ ",\n";
       }
       $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
     } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
@@ -71,8 +71,8 @@ module Data::Dump {
 
         for @attrs -> $attr {
           $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
-          $out ~= ( try { Dump($attr.get_value($obj), :$gist, :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } // 
-                    try { Dump($attr.hash, :$gist, :$max-recursion, :$indent, ilevel => $ilevel+1).trim; } //
+          $out ~= ( try { Dump($attr.get_value($obj), :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
+                    try { Dump($attr.hash, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
                     'undefined') ~ ",\n";
         }
 
