@@ -1,6 +1,6 @@
 module Data::Dump {
   my $colorizor = sub (Str $s) { '' };
-  
+
   try {
     require Terminal::ANSIColor;
     $colorizor = GLOBAL::Terminal::ANSIColor::EXPORT::DEFAULT::<&color>;
@@ -18,7 +18,7 @@ module Data::Dump {
     return $colorizor("bold white") ~ re-o($o) ~ $colorizor("reset");
   }
 
-  sub val ($o) { 
+  sub val ($o) {
     return $colorizor("blue") ~ re-o($o) ~ $colorizor("reset");
   }
 
@@ -37,7 +37,7 @@ module Data::Dump {
     my Str $spac2 = (' ' x $indent) x ($ilevel+1);
     if $obj.WHAT ~~ any(Pair, Hash) && !$gist {
       my @keys    = $obj.keys.sort;
-      my $spacing = @keys.map({ .chars }).max; 
+      my $spacing = @keys.map({ .chars }).max;
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
         $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
@@ -65,7 +65,7 @@ module Data::Dump {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       if $gist {
         $out ~= "{$spac2}{$obj.gist},\n";
-      } else { 
+      } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
         my @meths    = try { $obj.^methods.grep({ .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
