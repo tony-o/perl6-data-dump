@@ -3,7 +3,7 @@
 use Test;
 use lib 'lib';
 use Data::Dump;
-plan 1;
+plan 2;
 
 my $out = Dump(%(
   a => 'a',
@@ -21,3 +21,12 @@ my $out = Dump(%(
 
 
 ok $out eq "\{\n  a    => \"a\".Str,\n  b    => \"b\".Str,\n  hash => \{\n    a             => \"a\".Str,\n    b             => \"b\".Str,\n    hash          => \{\n      a => \"a\".Str,\n      b => 5.Int,\n    },\n    reallylongkey => \"key\".Str,\n  },\n}";
+
+my $expected = Q:to/END/;
+{
+  foo => "bar".Str,
+}
+END
+
+is Dump(Pair.new('foo', 'bar'), :color(False)), $expected.chomp;
+
