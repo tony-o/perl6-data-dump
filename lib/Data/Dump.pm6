@@ -35,7 +35,7 @@ module Data::Dump {
     my Str $out   = '';
     my Str $space = (' ' x $indent) x $ilevel;
     my Str $spac2 = (' ' x $indent) x ($ilevel+1);
-    if $obj.WHAT ~~ Hash && !$gist {
+    if $obj.WHAT ~~ any(Pair, Hash) && !$gist {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max; 
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
@@ -57,7 +57,11 @@ module Data::Dump {
       $out ~= $space ~ "(Any)\n";
     } elsif Method ~~ $obj.WHAT && !$gist {
       $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
-    } else {
+    } elsif $obj ~~ IO::Path && !$gist {
+      my $what = $obj.WHAT.^name;
+      $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :abspath("{$obj.abspath}")\n”;
+    }
+    else {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       if $gist {
         $out ~= "{$spac2}{$obj.gist},\n";
