@@ -35,7 +35,7 @@ module Data::Dump {
     my Str $out   = '';
     my Str $space = (' ' x $indent) x $ilevel;
     my Str $spac2 = (' ' x $indent) x ($ilevel+1);
-    if $obj.WHAT ~~ any(Pair, Hash) && !$gist {
+    if $obj.WHAT ~~ Hash && !$gist {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max;
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
@@ -44,6 +44,9 @@ module Data::Dump {
         $out ~= (try { Dump($obj{$key}, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
       }
       $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
+    } elsif $obj.WHAT ~~ Pair && !$gist {
+        my $key = $obj.key.WHAT ~~ Str ?? key($obj.key) !! Dump($obj.key, :$gist, :$max-recursion, :$indent, :$skip-methods);
+        $out ~= $key ~ ' => ' ~ Dump($obj.value, :$gist, :$max-recursion, :$indent, :$skip-methods);
     } elsif $obj.WHAT ~~ List && !$gist {
       $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
       for @($obj) -> $o {
