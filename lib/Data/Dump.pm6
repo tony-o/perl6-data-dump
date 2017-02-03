@@ -40,12 +40,15 @@ module Data::Dump {
       my $spacing = @keys.map({ .chars }).max;
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
-        $out ~= $spac2 ~ "{key($key)}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
+        my $chars = $key.chars;
+        $out ~= $spac2 ~ "{key($chars ?? $key !! '""')}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
         $out ~= (try { Dump($obj{$key}, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
       }
       $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
     } elsif $obj.WHAT ~~ Pair && !$gist {
-        my $key = $obj.key.WHAT ~~ Str ?? key($obj.key) !! Dump($obj.key, :$gist, :$max-recursion, :$indent, :$skip-methods);
+        my $key = $obj.key.WHAT ~~ Str
+        ?? key($obj.key eq '' ?? '""' !! $obj.key)
+        !! Dump($obj.key, :$gist, :$max-recursion, :$indent, :$skip-methods);
         $out ~= $key ~ ' => ' ~ Dump($obj.value, :$gist, :$max-recursion, :$indent, :$skip-methods);
     } elsif $obj.WHAT ~~ List && !$gist {
       $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
