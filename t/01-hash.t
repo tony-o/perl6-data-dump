@@ -27,12 +27,16 @@ my $expected-hash = Q:to/END/;
 }
 END
 my %hash = "" => 'bar';
-is Dump(%hash), $expected-hash.chomp, "Hash with a key which is an empty string";
+is Dump(%hash, :color(False)), $expected-hash.chomp, "Hash with a key which is an empty string";
 my $expected = 'foo => "bar".Str';
 my $expected2 = '11.Int => "bar".Str';
 my $expected3 = '"" => "bar".Str';
 
-is Dump(Pair.new('foo', 'bar'), :color(False)), $expected, "Pairs with Str keys";
-is Dump(Pair.new(11, 'bar'), :color(False)), $expected2, "Pairs with Int keys";
-is Dump(Pair.new('', 'bar'), :color(False)), $expected3, "Pair with an empty string as the key";
+my $set = Pair.new('foo', 'bar');
+my $set1 = Pair.new(11, 'bar');
+my $set2 = Pair.new('', 'bar');
+
+is Dump($set, :color(False)), $expected, "Pairs with Str keys";
+is Dump($set1, :color(False)), $expected2, "Pairs with Int keys";
+is Dump($set2, :color(False)), $expected3, "Pair with an empty string as the key";
 
