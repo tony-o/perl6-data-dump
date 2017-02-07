@@ -1,5 +1,7 @@
 # Data::Dump 
 
+[![Build Status](https://travis-ci.org/tony-o/perl6-data-dump.svg?branch=master)](https://travis-ci.org/tony-o/perl6-data-dump)
+
 ## for perl6
 
 that's right folks, here's a quicky for your data dump needs.  if you have Terminal::ANSIColor installed then the output will be so colorful your eyes might bleed.
