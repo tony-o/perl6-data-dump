@@ -65,7 +65,7 @@ module Data::Dump {
       $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
     } elsif $obj ~~ IO::Path && !$gist {
       my $what = $obj.WHAT.^name;
-      $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :abspath("{$obj.abspath}")\n”;
+      $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :absolute("{$obj.absolute}")\n”;
     }
     else {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
