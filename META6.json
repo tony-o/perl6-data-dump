@@ -13,5 +13,5 @@
   ],
   "description" : "a colorful? data dumper for perl6",
   "source-url"  : "git://github.com/tony-o/perl6-data-dump.git",
-  "version" : "v0.0.2"
+  "version" : "v0.0.3"
 }
