@@ -25,8 +25,10 @@ module Data::Dump {
   sub what ($o) {
     return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
   }
-
-  sub Dump ($obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
+  multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
+    return $obj.gist;
+  }
+  multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
     return '...' if $max-recursion == $ilevel;
     temp $colorizor = sub (Str $s) { '' } unless $color;
     try {
