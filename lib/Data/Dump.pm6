@@ -1,10 +1,6 @@
 module Data::Dump {
-  my $colorizor = sub (Str $s) { '' };
-
-  try {
-    require Terminal::ANSIColor;
-    $colorizor = GLOBAL::Terminal::ANSIColor::EXPORT::DEFAULT::<&color>;
-  }
+  my $colorizor = (try require Terminal::ANSIColor) === Nil
+    && {''} || ::('Terminal::ANSIColor::EXPORT::DEFAULT::&color');
 
   sub re-o ($o) {
     $o // 'undef';
