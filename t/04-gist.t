@@ -15,6 +15,6 @@ $out = Dump('foobar' ~~ m/foo(bar)/, :color(False), :gist);
 
 ok $out eq "Match :: (\n  ｢foobar｣\n 0 => ｢bar｣,\n)", 'Match object';
 
-$out = Dump(Pair.new, :color(False), :gist);
+$out = Dump(Pair.new(Mu, Mu), :color(False), :gist);
 
-ok $out eq "Pair :: (\n  (Mu) => (Mu),\n)";
+is-deeply $out, "Pair :: (\n  (Mu) => (Mu),\n)", "Pair with undefined keys";
