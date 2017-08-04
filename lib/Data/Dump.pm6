@@ -71,13 +71,14 @@ module Data::Dump {
         $out ~= "{$spac2}{$obj.gist},\n";
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods.grep({ .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+        my @meths    = try { $obj.^methods.grep({ try .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
         my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
         my $spacing  = (@attr-len, @meth-len).max;
 
 
         for @attrs -> $attr {
+          next unless $attr;
           $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
           $out ~= ( try { Dump($attr.get_value($obj), :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
                     try { Dump($attr.hash, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
@@ -87,11 +88,15 @@ module Data::Dump {
         $out ~= "\n" if @attrs.elems > 0;
         if !$skip-methods {
           for @meths -> $meth {
-            my $sig = $meth.signature.params[1..*-2].map({
-              .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
-            }).join(sym(', ') ~ $colorizor('blue'));
+            if $meth.^can('signature') {
+              my $sig = $meth.signature.params[1..*-2].map({
+                .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
+              }).join(sym(', ') ~ $colorizor('blue'));
 
-            $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+              $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+            } else {
+              CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
+            }
           }
         }
       }
