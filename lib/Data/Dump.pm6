@@ -61,6 +61,8 @@ module Data::Dump {
       $out ~= $space ~ "(Any)\n";
     } elsif Method ~~ $obj.WHAT && !$gist {
       $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
+    } elsif Range ~~ $obj.WHAT && !$gist {
+      $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
     } elsif $obj ~~ IO::Path && !$gist {
       my $what = $obj.WHAT.^name;
       $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :absolute("{$obj.absolute}")\n”;
@@ -71,7 +73,7 @@ module Data::Dump {
         $out ~= "{$spac2}{$obj.gist},\n";
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods.grep({ try .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+        my @meths    = try { $obj.^methods.grep({ so .^mro[0] ~~ $obj.WHAT && try .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
         my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
         my $spacing  = (@attr-len, @meth-len).max;
