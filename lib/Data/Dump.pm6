@@ -1,4 +1,5 @@
 module Data::Dump {
+  my %provides-cache;
   my $colorizor = (try require Terminal::ANSIColor) === Nil
     && {''} || ::('Terminal::ANSIColor::EXPORT::DEFAULT::&color');
 
@@ -21,6 +22,22 @@ module Data::Dump {
   sub what ($o) {
     return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
   }
+
+  sub pseudo-cache($obj) { #provide list of methods provided by parents
+    my %r;
+    for $obj.^mro[1..*] -> $x {
+      if %provides-cache{$x.^name} {
+        %provides-cache{$x.^name}.map({ %r{$_}.push($x.^name); });
+      } else {
+        $x.^methods.map({
+          %provides-cache{$x.^name}.push($_.gist.Str);
+          %r{$_.gist.Str}.push($x.^name);
+        });
+      }
+    }
+    %r;
+  }
+
   multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
     return $obj.gist;
   }
@@ -79,7 +96,7 @@ module Data::Dump {
         my $spacing  = (@attr-len, @meth-len).max;
 
 
-        for @attrs -> $attr {
+        for @attrs.sort -> $attr {
           next unless $attr;
           $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
           $out ~= ( try { Dump($attr.get_value($obj), :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
@@ -89,12 +106,14 @@ module Data::Dump {
 
         $out ~= "\n" if @attrs.elems > 0;
         if !$skip-methods {
-          for @meths -> $meth {
+          my %parent-methods = pseudo-cache($obj);
+          for @meths.sort({$^a.gist.Str cmp $^b.gist.Str}) -> $meth {
+            next if %parent-methods{$meth.gist.Str};
             if $meth.^can('signature') {
               my $sig = $meth.signature.params[1..*-2].map({
                 .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
               }).join(sym(', ') ~ $colorizor('blue'));
-
+              
               $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
             } else {
               CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
