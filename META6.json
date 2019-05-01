@@ -3,15 +3,14 @@
   "support" : {
   },
   "auth": "github:tony-o",
-  "perl" : "6.c",
+  "perl" : "6",
   "provides" : {
     "Data::Dump" : "lib/Data/Dump.pm6"
   },
   "depends": [ ],
   "test-depends" : [
-    "Test"
   ],
   "description" : "a colorful? data dumper for perl6",
   "source-url"  : "git://github.com/tony-o/perl6-data-dump.git",
-  "version" : "v0.0.8"
+  "version" : "v0.0.9"
 }

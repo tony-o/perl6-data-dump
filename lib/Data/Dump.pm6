@@ -73,10 +73,10 @@ module Data::Dump {
       $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
     } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
       my $what = $obj.WHAT.^name;
-      $out ~= "{$space}{val($obj.perl // '<undef>')}\.{what($what)}\n";
-    } elsif Any ~~ $obj.WHAT && !$gist {
-      $out ~= $space ~ "(Any)\n";
-    } elsif Method ~~ $obj.WHAT && !$gist {
+      $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ '.' ~ what($what) !! what($what) ~ ':U' }\n";
+    } elsif (Nil|Any) ~~ $obj.WHAT && !$gist {
+      $out ~= $space ~ "({Nil ~~ $obj.WHAT ?? 'Nil' !! 'Any'})\n";
+    } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
       $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
     } elsif Range ~~ $obj.WHAT && !$gist {
       $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
@@ -90,7 +90,9 @@ module Data::Dump {
         $out ~= "{$spac2}{$obj.gist},\n";
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods.grep({ $obj ~~ (.^mro[0]|$obj::&"$_".^mro[0]) && try .^can('Str') }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+        my @meths    = try { $obj.^methods.grep({
+          $obj ~~ $_.^mro[0];
+        }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
         my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
         my $spacing  = (@attr-len, @meth-len).max;
