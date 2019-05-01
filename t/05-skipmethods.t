@@ -38,9 +38,9 @@ role G {
 class H does G {
 }
 
-$expected = "H :: (\n \$!g => undefined,\n\n)";
+$expected = "H :: (\n  \$!g => undefined,\n\n)";
 $out = Dump(H, :!color, :skip-methods);
 
-ok $out eq $expected, "role stuff still is recognized in class" or die $out;
+ok $out eq $expected, "role stuff still is recognized in class" or die $out.perl;
 
 # vi:syntax=perl6
