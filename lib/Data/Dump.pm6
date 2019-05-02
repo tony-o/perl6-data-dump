@@ -83,8 +83,19 @@ module Data::Dump {
     } elsif $obj ~~ IO::Path && !$gist {
       my $what = $obj.WHAT.^name;
       $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :absolute("{$obj.absolute}")\n”;
-    }
-    else {
+    } elsif $obj ~~ Match && !$gist {
+      $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
+      my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
+      my $asp   = @props.map({ .chars }).max;
+      for @props -> $p {
+        $out ~= "{$spac2}{key($p)}{ ' ' x ($asp - $p.chars) } => ";
+        $out ~= (try {
+          CATCH { .say; }
+          Dump($obj.^can($p)[0].($obj), :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim;
+        } // 'Failure') ~ ",\n";
+      }
+      $out ~= "{$space}{sym(')')}\n";
+    } else {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       if $gist {
         $out ~= "{$spac2}{$obj.gist},\n";
