@@ -83,7 +83,7 @@ module Data::Dump {
     } elsif $obj ~~ IO::Path && !$gist {
       my $what = $obj.WHAT.^name;
       $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :absolute("{$obj.absolute}")\n”;
-    } elsif $obj ~~ Match && !$gist {
+    } elsif $obj ~~ Match|Grammar && !$gist {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
       my $asp   = @props.map({ .chars }).max;
