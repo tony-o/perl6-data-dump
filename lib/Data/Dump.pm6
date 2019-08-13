@@ -38,10 +38,11 @@ module Data::Dump {
     %r;
   }
 
-  multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
+  multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
     return $obj.gist;
   }
-  multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False) is export {
+
+  multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
     return '...' if $max-recursion == $ilevel;
     temp $colorizor = sub (Str $s) { '' } unless $color;
     try {
@@ -50,30 +51,40 @@ module Data::Dump {
     my Str $out   = '';
     my Str $space = (' ' x $indent) x $ilevel;
     my Str $spac2 = (' ' x $indent) x ($ilevel+1);
-    if $obj.WHAT ~~ Hash && !$gist {
+    %overrides.map({ %overrides{$_.key.^name} //= $_.value; });
+    if %overrides{$obj.^name}.defined {
+      my %options;
+      warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(!*.named).elems != 1;
+      for %overrides{$obj.^name}.signature.params -> $param {
+        next unless $param.named;
+        next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+        %options{$param.substr(1)} = $::($param.substr(1));
+      }
+      $out ~= %overrides{$obj.^name}($obj, |%options) ~ "\n";
+    } elsif $obj.WHAT ~~ Hash && !$gist {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max;
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
       for @keys -> $key {
         my $chars = $key.chars;
         $out ~= $spac2 ~ "{key($chars ?? $key !! '""')}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
-        $out ~= (try { Dump($obj{$key}, :$gist, :$color, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
+        $out ~= (try { Dump($obj{$key}, :%overrides, :$no-postfix, :$gist, :$color, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
       }
       $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
     } elsif $obj.WHAT ~~ Pair && !$gist {
         my $key = $obj.key.WHAT ~~ Str
         ?? key($obj.key eq '' ?? '""' !! $obj.key)
-        !! Dump($obj.key, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color);
-        $out ~= $key ~ ' => ' ~ Dump($obj.value, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color);
+        !! Dump($obj.key, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
+        $out ~= $key ~ ' => ' ~ Dump($obj.value, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
     } elsif $obj.WHAT ~~ List && !$gist {
       $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
       for @($obj) -> $o {
-        $out ~= Dump($o, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim-trailing ~ ",\n";
+        $out ~= Dump($o, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim-trailing ~ ",\n";
       }
       $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
     } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
       my $what = $obj.WHAT.^name;
-      $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ '.' ~ what($what) !! what($what) ~ ':U' }\n";
+      $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
     } elsif (Nil|Any) ~~ $obj.WHAT && !$gist {
       $out ~= $space ~ "({Nil ~~ $obj.WHAT ?? 'Nil' !! 'Any'})\n";
     } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
@@ -82,7 +93,7 @@ module Data::Dump {
       $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
     } elsif $obj ~~ IO::Path && !$gist {
       my $what = $obj.WHAT.^name;
-      $out ~= “{$space}{val($obj.perl // '<undef>')}\.{what($what)} :absolute("{$obj.absolute}")\n”;
+      $out ~= “{$space}{val($obj.perl // '<undef>')}{$no-postfix ?? '' !! '.'~what($what)} :absolute("{$obj.absolute}")\n”;
     } elsif $obj ~~ Match|Grammar && !$gist {
       $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
       my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
@@ -91,7 +102,7 @@ module Data::Dump {
         $out ~= "{$spac2}{key($p)}{ ' ' x ($asp - $p.chars) } => ";
         $out ~= (try {
           CATCH { .say; }
-          Dump($obj.^can($p)[0].($obj), :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim;
+          Dump($obj.^can($p)[0].($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim;
         } // 'Failure') ~ ",\n";
       }
       $out ~= "{$space}{sym(')')}\n";
@@ -112,8 +123,8 @@ module Data::Dump {
         for @attrs.sort -> $attr {
           next unless $attr;
           $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
-          $out ~= ( try { Dump($attr.get_value($obj), :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
-                    try { Dump($attr.hash, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
+          $out ~= ( try { Dump($attr.get_value($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
+                    try { Dump($attr.hash, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
                     'undefined') ~ ",\n";
         }
 
@@ -122,14 +133,25 @@ module Data::Dump {
           my %parent-methods = pseudo-cache($obj);
           for @meths.sort({$^a.gist.Str cmp $^b.gist.Str}) -> $meth {
             next if %parent-methods{$meth.gist.Str};
-            if $meth.^can('signature') {
-              my $sig = $meth.signature.params[1..*-2].map({
-                .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
-              }).join(sym(', ') ~ $colorizor('blue'));
-              
-              $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+            if %overrides{Method.^name} {
+              my %options;
+              warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(!*.named).elems != 1;
+              for %overrides{Method.^name}.signature.params -> $param {
+                next unless $param.named;
+                next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+                %options{$param.substr(1)} = $::($param.substr(1));
+              }
+              $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
             } else {
-              CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
+              if $meth.^can('signature') {
+                my $sig = $meth.signature.params[1..*-2].map({
+                  .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
+                }).join(sym(', ') ~ $colorizor('blue'));
+                
+                $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+              } else {
+                CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
+              }
             }
           }
         }
@@ -198,7 +220,30 @@ This will override the default object determination and output and use the outpu
  say Dump({ some => object }, :gist);
  <...>
 
+=head3 C<no-postfix>
 
+default: C<False>
+
+This will shorten C<Str|Int|Rat|Numeric> output from C<5.Int|"H".Str> to simply C<5|"H">
+
+=head3 C<skip-methods>
+
+default: C<False>
+
+This will skip the methods if you dump custom classes.
+
+=head3 C<overrides>
+
+default: C<{}>
+
+This will allow you to override how DD dumps certain types of objects.
+
+ perl6
+ Dump($object, overrides => {
+   Int => sub ($int) { return $int * 2; },
+   Str => sub ($str) { return "'$str'"; },
+   # etc.
+ });
 
 =head2 usage
 

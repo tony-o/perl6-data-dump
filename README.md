@@ -54,6 +54,12 @@ say Dump({ some => object}, :gist);
 <...>
 ```
 
+### `no-postfix`
+
+default: `False`
+
+This will shorten `Str|Int|Rat|Numeric` output from `5.Int|"H".Str` to simply `5|"H"`
+
 ### `skip-methods`
 
 default: `False`
@@ -64,6 +70,20 @@ This will skip the methods if you dump custom classes.
 <...>
 say Dump($object, :skip-methods(True));
 <...>
+```
+
+### `overrides`
+
+default: `{}`
+
+This will allow you to override how DD dumps certain types of objects.
+
+```perl6
+Dump($object, overrides => {
+  Int => sub ($int) { return $int * 2; },
+  Str => sub ($str) { return "'$str'"; },
+  # etc.
+});
 ```
 
 ## usage
