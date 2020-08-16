@@ -57,7 +57,7 @@ module Data::Dump {
       warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(*.positional).elems != 1;
       for %overrides{$obj.^name}.signature.params -> $param {
         next unless $param.named;
-        next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+        next unless $param.name ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
         %options{$param.substr(1)} = $::($param.substr(1));
       }
       $out ~= %overrides{$obj.^name}($obj, |%options) ~ "\n";
@@ -138,7 +138,7 @@ module Data::Dump {
               warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(*.positional).elems != 1;
               for %overrides{Method.^name}.signature.params -> $param {
                 next unless $param.named;
-                next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+                next unless $param.name ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
                 %options{$param.substr(1)} = $::($param.substr(1));
               }
               $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
