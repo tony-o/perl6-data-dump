@@ -112,9 +112,7 @@ module Data::Dump {
         $out ~= "{$spac2}{$obj.gist},\n";
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods.grep({
-          $obj ~~ $_.^mro[0];
-        }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+        my @meths    = try { $obj.^methods(:local).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
         my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
         my $spacing  = (@attr-len, @meth-len).max;
