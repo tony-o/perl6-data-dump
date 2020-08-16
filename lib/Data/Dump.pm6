@@ -30,8 +30,8 @@ module Data::Dump {
         %provides-cache{$x.^name}.map({ %r{$_}.push($x.^name); });
       } else {
         $x.^methods.map({
-          %provides-cache{$x.^name}.push($_.gist.Str);
-          %r{$_.gist.Str}.push($x.^name);
+          %provides-cache{$x.^name}.push($_.name.Str);
+          %r{$_.name.Str}.push($x.^name);
         });
       }
     }
@@ -112,9 +112,9 @@ module Data::Dump {
         $out ~= "{$spac2}{$obj.gist},\n";
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods(:local).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+        my @meths    = try { $obj.^methods(:local).sort({ $^x.name.Str cmp $^y.name.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
-        my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
+        my @meth-len = @meths.map({ .name.Str.chars });
         my $spacing  = (@attr-len, @meth-len).max;
 
 
@@ -129,8 +129,8 @@ module Data::Dump {
         $out ~= "\n" if @attrs.elems > 0;
         if !$skip-methods {
           my %parent-methods = pseudo-cache($obj);
-          for @meths.sort({$^a.gist.Str cmp $^b.gist.Str}) -> $meth {
-            next if %parent-methods{$meth.gist.Str};
+          for @meths -> $meth {
+            next if %parent-methods{$meth.name.Str};
             if %overrides{Method.^name} {
               my %options;
               warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(*.positional).elems != 1;
@@ -145,9 +145,9 @@ module Data::Dump {
                 my $sig = $meth.signature.params[1..*-2].map({
                   .gist.Str.subst(/'{ ... }'/, do with .default { .() } else { '' });
                 }).join(sym(', ') ~ $colorizor('blue'));
-                $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
+                $out ~= "{$spac2}{sym('method')} {key($meth.name.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
               } else {
-                CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
+                CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.name.Str)},\n"; };
               }
             }
           }
