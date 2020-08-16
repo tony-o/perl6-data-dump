@@ -144,13 +144,9 @@ module Data::Dump {
               $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
             } else {
               if $meth.^can('signature') {
-                my $sig = '';
-                try { 
-                  CATCH { default { } }
-                  $sig = $meth.signature.params[1..*-2].map({
-                    .gist.Str.subst(/'{ ... }'/, do with .default { .() } else { '' });
-                  }).join(sym(', ') ~ $colorizor('blue'));
-                };
+                my $sig = $meth.signature.params[1..*-2].map({
+                  .gist.Str.subst(/'{ ... }'/, do with .default { .() } else { '' });
+                }).join(sym(', ') ~ $colorizor('blue'));
                 $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
               } else {
                 CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
