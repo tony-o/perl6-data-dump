@@ -54,7 +54,7 @@ module Data::Dump {
     %overrides.map({ %overrides{$_.key.^name} //= $_.value; });
     if %overrides{$obj.^name}.defined {
       my %options;
-      warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(!*.named).elems != 1;
+      warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(*.positional).elems != 1;
       for %overrides{$obj.^name}.signature.params -> $param {
         next unless $param.named;
         next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
@@ -135,7 +135,7 @@ module Data::Dump {
             next if %parent-methods{$meth.gist.Str};
             if %overrides{Method.^name} {
               my %options;
-              warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(!*.named).elems != 1;
+              warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(*.positional).elems != 1;
               for %overrides{Method.^name}.signature.params -> $param {
                 next unless $param.named;
                 next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
