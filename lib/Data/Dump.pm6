@@ -23,6 +23,14 @@ module Data::Dump {
     return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
   }
 
+  sub method-gist ($o) {
+    sym($o ~~ Method ?? 'method ' !! 'sub ') ~
+    $o.name ~ ' (' ~
+    $o.signature.params[($o ~~ Method ?? 1 !! 0) .. *-2].map({.gist}).join(', ') ~
+    ') returns ' ~ $o.returns.WHAT.^name ~
+    ' {...}';
+  }
+
   sub pseudo-cache($obj) { #provide list of methods provided by parents
     my %r;
     for $obj.^mro[1..*] -> $x {
@@ -61,7 +69,7 @@ module Data::Dump {
         %options{$param.substr(1)} = $::($param.substr(1));
       }
       $out ~= %overrides{$obj.^name}($obj, |%options) ~ "\n";
-    } elsif $obj.WHAT ~~ Hash && !$gist {
+    } elsif $obj.WHAT ~~ Hash|Map && !$gist {
       my @keys    = $obj.keys.sort;
       my $spacing = @keys.map({ .chars }).max;
       $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
@@ -113,12 +121,11 @@ module Data::Dump {
       } else {
         my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
         my @meths    = try { $obj.^methods.grep({
-          $obj ~~ $_.^mro[0];
-        }).sort({ $^x.gist.Str cmp $^y.gist.Str }) } // @();
+          $obj ~~ $_.^mro[0] && $_ ~~ Method;
+        }).sort({ $^x.^name.Str cmp $^y.^name.Str }) } // @();
         my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
-        my @meth-len = @meths.map({ next unless .^can('gist'); .gist.Str.chars });
+        my @meth-len = @meths.map({ method-gist($_) }).map({ next unless .^can('chars'); .chars });
         my $spacing  = (@attr-len, @meth-len).max;
-
 
         for @attrs.sort -> $attr {
           next unless $attr;
@@ -131,8 +138,8 @@ module Data::Dump {
         $out ~= "\n" if @attrs.elems > 0;
         if !$skip-methods {
           my %parent-methods = pseudo-cache($obj);
-          for @meths.sort({$^a.gist.Str cmp $^b.gist.Str}) -> $meth {
-            next if %parent-methods{$meth.gist.Str};
+          for @meths.sort({$^a cmp $^b}) -> $meth {
+            next if %parent-methods{$meth.^name};
             if %overrides{Method.^name} {
               my %options;
               warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(!*.named).elems != 1;
@@ -143,18 +150,7 @@ module Data::Dump {
               }
               $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
             } else {
-              if $meth.^can('signature') {
-                my $sig = '';
-                try { 
-                  CATCH { default { } }
-                  $sig = $meth.signature.params[1..*-2].map({
-                    .gist.Str.subst(/'{ ... }'/, .default ~~ Callable ?? .default.() !! '');
-                  }).join(sym(', ') ~ $colorizor('blue'));
-                };
-                $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)} ({val($sig)}) returns {what($meth.returns.WHAT.^name)} {sym('{...}')},\n";
-              } else {
-                CATCH { $out ~= "{$spac2}{sym('method')} {key($meth.gist.Str)},\n"; };
-              }
+              $out ~= "{$spac2}{method-gist($meth)},\n";
             }
           }
         }
