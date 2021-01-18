@@ -2,7 +2,7 @@
   "name" : "Data::Dump",
   "support" : {
   },
-  "auth": "github:tony-o",
+  "auth": "zef:tony-o",
   "perl" : "6",
   "provides" : {
     "Data::Dump" : "lib/Data/Dump.pm6"
