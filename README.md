@@ -8,6 +8,8 @@ feel free to submit bugs or make suggestions, if you submit a bug please provide
 
 ## options
 
+all of these options can be overridden in the `DATA_DUMP` environment variable in the format: `indent=4,color=false`
+
 ### `indent`
 
 default: `2`

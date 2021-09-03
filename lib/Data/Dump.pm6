@@ -1,166 +1,179 @@
-module Data::Dump {
-  my %provides-cache;
-  my $colorizor = (try require Terminal::ANSIColor) === Nil
-    && {''} || ::('Terminal::ANSIColor::EXPORT::DEFAULT::&color');
+unit module Data::Dump;
+my %provides-cache;
+my $colorizor = (try require ::('Terminal::ANSIColor')) === Nil
+  && {''} || ::('Terminal::ANSIColor::EXPORT::DEFAULT::&color');
 
-  sub re-o ($o) {
-    $o // 'undef';
-  }
+sub re-o ($o) {
+  $o // 'undef';
+}
 
-  sub key ($o) {
-    return $colorizor("red") ~ re-o($o) ~ $colorizor("reset");
-  }
+sub key ($o) {
+  return $colorizor("red") ~ re-o($o) ~ $colorizor("reset");
+}
 
-  sub sym ($o) {
-    return $colorizor("bold white") ~ re-o($o) ~ $colorizor("reset");
-  }
+sub sym ($o) {
+  return $colorizor("bold white") ~ re-o($o) ~ $colorizor("reset");
+}
 
-  sub val ($o) {
-    return $colorizor("blue") ~ re-o($o) ~ $colorizor("reset");
-  }
+sub val ($o) {
+  return $colorizor("blue") ~ re-o($o) ~ $colorizor("reset");
+}
 
-  sub what ($o) {
-    return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
-  }
+sub what ($o) {
+  return $colorizor("yellow") ~ re-o($o) ~ $colorizor("reset");
+}
 
-  sub method-gist ($o) {
-    sym($o ~~ Method ?? 'method ' !! 'sub ') ~
-    $o.name ~ ' (' ~
-    $o.signature.params[($o ~~ Method ?? 1 !! 0) .. *-2].map({.gist}).join(', ') ~
-    ') returns ' ~ $o.returns.WHAT.^name ~
-    ' {...}';
-  }
+sub method-gist ($o) {
+  sym($o ~~ Method ?? 'method ' !! 'sub ') ~
+  $o.name ~ ' (' ~
+  $o.signature.params[($o ~~ Method ?? 1 !! 0) .. *-2].map({.gist}).join(', ') ~
+  ') returns ' ~ $o.returns.WHAT.^name ~
+  ' {...}';
+}
 
-  sub pseudo-cache($obj) { #provide list of methods provided by parents
-    my %r;
-    for $obj.^mro[1..*] -> $x {
-      if %provides-cache{$x.^name} {
-        %provides-cache{$x.^name}.map({ %r{$_}.push($x.^name); });
-      } else {
-        $x.^methods.map({
-          %provides-cache{$x.^name}.push($_.gist.Str);
-          %r{$_.gist.Str}.push($x.^name);
-        });
-      }
-    }
-    %r;
-  }
-
-  multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
-    return $obj.gist;
-  }
-
-  multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
-    return '...' if $max-recursion == $ilevel;
-    temp $colorizor = sub (Str $s) { '' } unless $color;
-    try {
-      require 'Terminal::ANSIColor';
-    };
-    my Str $out   = '';
-    my Str $space = (' ' x $indent) x $ilevel;
-    my Str $spac2 = (' ' x $indent) x ($ilevel+1);
-    %overrides.map({ %overrides{$_.key.^name} //= $_.value; });
-    if %overrides{$obj.^name}.defined {
-      my %options;
-      warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(!*.named).elems != 1;
-      for %overrides{$obj.^name}.signature.params -> $param {
-        next unless $param.named;
-        next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
-        %options{$param.substr(1)} = $::($param.substr(1));
-      }
-      $out ~= %overrides{$obj.^name}($obj, |%options) ~ "\n";
-    } elsif $obj.WHAT ~~ Hash|Map && !$gist {
-      my @keys    = $obj.keys.sort;
-      my $spacing = @keys.map({ .chars }).max;
-      $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
-      for @keys -> $key {
-        my $chars = $key.chars;
-        $out ~= $spac2 ~ "{key($chars ?? $key !! '""')}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
-        $out ~= (try { Dump($obj{$key}, :%overrides, :$no-postfix, :$gist, :$color, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
-      }
-      $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
-    } elsif $obj.WHAT ~~ Pair && !$gist {
-        my $key = $obj.key.WHAT ~~ Str
-        ?? key($obj.key eq '' ?? '""' !! $obj.key)
-        !! Dump($obj.key, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
-        $out ~= $key ~ ' => ' ~ Dump($obj.value, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
-    } elsif $obj.WHAT ~~ List && !$gist {
-      $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
-      for @($obj) -> $o {
-        $out ~= Dump($o, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim-trailing ~ ",\n";
-      }
-      $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
-    } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
-      my $what = $obj.WHAT.^name;
-      $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
-    } elsif (Nil|Any) ~~ $obj.WHAT && !$gist {
-      $out ~= $space ~ "({Nil ~~ $obj.WHAT ?? 'Nil' !! 'Any'})\n";
-    } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
-      $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
-    } elsif Range ~~ $obj.WHAT && !$gist {
-      $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
-    } elsif $obj ~~ IO::Path && !$gist {
-      my $what = $obj.WHAT.^name;
-      $out ~= “{$space}{val($obj.perl // '<undef>')}{$no-postfix ?? '' !! '.'~what($what)} :absolute("{$obj.absolute}")\n”;
-    } elsif $obj ~~ Match|Grammar && !$gist {
-      $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
-      my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
-      my $asp   = @props.map({ .chars }).max;
-      for @props -> $p {
-        $out ~= "{$spac2}{key($p)}{ ' ' x ($asp - $p.chars) } => ";
-        $out ~= (try {
-          CATCH { .say; }
-          Dump($obj.^can($p)[0].($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim;
-        } // 'Failure') ~ ",\n";
-      }
-      $out ~= "{$space}{sym(')')}\n";
+sub pseudo-cache($obj) { #provide list of methods provided by parents
+  my %r;
+  for $obj.^mro[1..*] -> $x {
+    if %provides-cache{$x.^name} {
+      %provides-cache{$x.^name}.map({ %r{$_}.push($x.^name); });
     } else {
-      $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
-      if $gist {
-        $out ~= "{$spac2}{$obj.gist},\n";
-      } else {
-        my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
-        my @meths    = try { $obj.^methods.grep({
-          $obj ~~ $_.^mro[0] && $_ ~~ Method;
-        }).sort({ $^x.^name.Str cmp $^y.^name.Str }) } // @();
-        my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
-        my @meth-len = @meths.map({ method-gist($_) }).map({ next unless .^can('chars'); .chars });
-        my $spacing  = (@attr-len, @meth-len).max;
+      $x.^methods.map({
+        %provides-cache{$x.^name}.push($_.gist.Str);
+        %r{$_.gist.Str}.push($x.^name);
+      });
+    }
+  }
+  %r;
+}
 
-        for @attrs.sort -> $attr {
-          next unless $attr;
-          $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
-          $out ~= ( try { Dump($attr.get_value($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
-                    try { Dump($attr.hash, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
-                    'undefined') ~ ",\n";
-        }
+my %defaults = (:color(True), :indent(2), :ilevel(0), :max-recursion(50), :gist(False), :skip-methods(False), :no-postfix(False));
 
-        $out ~= "\n" if @attrs.elems > 0;
-        if !$skip-methods {
-          my %parent-methods = pseudo-cache($obj);
-          for @meths.sort({$^a cmp $^b}) -> $meth {
-            next if %parent-methods{$meth.^name};
-            if %overrides{Method.^name} {
-              my %options;
-              warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(!*.named).elems != 1;
-              for %overrides{Method.^name}.signature.params -> $param {
-                next unless $param.named;
-                next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
-                %options{$param.substr(1)} = $::($param.substr(1));
-              }
-              $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
-            } else {
-              $out ~= "{$spac2}{method-gist($meth)},\n";
+if %*ENV{'DATA_DUMP'} {
+  for %*ENV{'DATA_DUMP'}.split(',', :skip-empty) -> $i {
+    my ($k,$v) = $i.split('=').map(*.lc.trim);
+    try {
+      CATCH { default { say "WARN(DATA_DUMP): $_"; } }
+      %defaults{$k} = %defaults{$k}.WHAT ~~ Bool
+                   ?? ($v.lc eq 'true' ?? True !! ($v.lc eq 'false' ?? False !! die "$k can only be set to 'true' or 'false', got: '$v'"))
+                   !! %defaults{$k}.WHAT.new($v);
+    };
+  }
+}
+
+multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
+  return $obj.gist;
+}
+
+multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
+  return '...' if $max-recursion == $ilevel;
+  temp $colorizor = sub (Str $s) { '' } unless $color;
+  try {
+    require 'Terminal::ANSIColor';
+  };
+  my Str $out   = '';
+  my Str $space = (' ' x $indent) x $ilevel;
+  my Str $spac2 = (' ' x $indent) x ($ilevel+1);
+  %overrides.map({ %overrides{$_.key.^name} //= $_.value; });
+  if %overrides{$obj.^name}.defined {
+    my %options;
+    warn 'Overrides must contain only one positional parameter' if %overrides{$obj.^name}.signature.params.grep(!*.named).elems != 1;
+    for %overrides{$obj.^name}.signature.params -> $param {
+      next unless $param.named;
+      next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+      %options{$param.substr(1)} = $::($param.substr(1));
+    }
+    $out ~= %overrides{$obj.^name}($obj, |%options) ~ "\n";
+  } elsif $obj.WHAT ~~ Hash|Map && !$gist {
+    my @keys    = $obj.keys.sort;
+    my $spacing = @keys.map({ .chars }).max;
+    $out ~= "{$space}{sym('{')}" ~ (@keys.elems > 0 ?? "\n" !! "");
+    for @keys -> $key {
+      my $chars = $key.chars;
+      $out ~= $spac2 ~ "{key($chars ?? $key !! '""')}{ ' ' x ($spacing - $key.chars)} {sym('=>')} ";
+      $out ~= (try { Dump($obj{$key}, :%overrides, :$no-postfix, :$gist, :$color, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } // 'failure') ~ ",\n";
+    }
+    $out ~= "{@keys.elems > 0 ?? $space !! ' '}{sym('}')}\n";
+  } elsif $obj.WHAT ~~ Pair && !$gist {
+      my $key = $obj.key.WHAT ~~ Str
+      ?? key($obj.key eq '' ?? '""' !! $obj.key)
+      !! Dump($obj.key, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
+      $out ~= $key ~ ' => ' ~ Dump($obj.value, :%overrides, :$gist, :$max-recursion, :$indent, :$skip-methods, :$color, :$no-postfix);
+  } elsif $obj.WHAT ~~ List && !$gist {
+    $out ~= "{$space}{sym('[')}" ~ (@($obj).elems > 0 ?? "\n" !! "");
+    for @($obj) -> $o {
+      $out ~= Dump($o, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim-trailing ~ ",\n";
+    }
+    $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
+  } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
+    my $what = $obj.WHAT.^name;
+    $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
+  } elsif (Nil|Any) ~~ $obj.WHAT && !$gist {
+    $out ~= $space ~ "({Nil ~~ $obj.WHAT ?? 'Nil' !! 'Any'})\n";
+  } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
+    $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
+  } elsif Range ~~ $obj.WHAT && !$gist {
+    $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
+  } elsif $obj ~~ IO::Path && !$gist {
+    my $what = $obj.WHAT.^name;
+    $out ~= “{$space}{val($obj.perl // '<undef>')}{$no-postfix ?? '' !! '.'~what($what)} :absolute("{$obj.absolute}")\n”;
+  } elsif $obj ~~ Match|Grammar && !$gist {
+    $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
+    my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
+    my $asp   = @props.map({ .chars }).max;
+    for @props -> $p {
+      $out ~= "{$spac2}{key($p)}{ ' ' x ($asp - $p.chars) } => ";
+      $out ~= (try {
+        CATCH { .say; }
+        Dump($obj.^can($p)[0].($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim;
+      } // 'Failure') ~ ",\n";
+    }
+    $out ~= "{$space}{sym(')')}\n";
+  } else {
+    $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
+    if $gist {
+      $out ~= "{$spac2}{$obj.gist},\n";
+    } else {
+      my @attrs    = try { $obj.^attributes.sort({ $^x.Str cmp $^y.Str }) } // @();
+      my @meths    = try { $obj.^methods.grep({
+        $obj ~~ $_.^mro[0] && $_ ~~ Method;
+      }).sort({ $^x.^name.Str cmp $^y.^name.Str }) } // @();
+      my @attr-len = @attrs.map({ next unless .so && .^can('Str'); .Str.chars });
+      my @meth-len = @meths.map({ method-gist($_) }).map({ next unless .^can('chars'); .chars });
+      my $spacing  = (@attr-len, @meth-len).max;
+
+      for @attrs.sort -> $attr {
+        next unless $attr;
+        $out ~= "{$spac2}{key($attr)}{ ' ' x ($spacing - ($attr.so ?? $attr.Str.chars !! 0)) } => ";
+        $out ~= ( try { Dump($attr.get_value($obj), :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
+                  try { Dump($attr.hash, :%overrides, :$no-postfix, :$color, :$gist, :$max-recursion, :$indent, :$skip-methods, ilevel => $ilevel+1).trim; } //
+                  'undefined') ~ ",\n";
+      }
+
+      $out ~= "\n" if @attrs.elems > 0;
+      if !$skip-methods {
+        my %parent-methods = pseudo-cache($obj);
+        for @meths.sort({$^a cmp $^b}) -> $meth {
+          next if %parent-methods{$meth.^name};
+          if %overrides{Method.^name} {
+            my %options;
+            warn 'Overrides must contain only one positional parameter' if %overrides{Method.^name}.signature.params.grep(!*.named).elems != 1;
+            for %overrides{Method.^name}.signature.params -> $param {
+              next unless $param.named;
+              next unless $param.named ~~ (qw<$indent $ilevel $color $max-recursion $gist $skip-methods $no-postfix %overrides>);
+              %options{$param.substr(1)} = $::($param.substr(1));
             }
+            $out ~= $spac2 ~ %overrides{Method.^name}($meth, |%options) ~ "\n";
+          } else {
+            $out ~= "{$spac2}{method-gist($meth)},\n";
           }
         }
       }
-
-      $out ~= "{$space}{sym(')')}\n";
     }
-    $out .=trim if ($ilevel == 0);
-    return $out;
+
+    $out ~= "{$space}{sym(')')}\n";
   }
+  $out .=trim if ($ilevel == 0);
+  return $out;
 }
 
 =begin pod
@@ -176,6 +189,9 @@ provide a concise example that replicates the problem and i'll add some
 tests and make this thing better.
 
 =head2 options
+
+all of these options can be overriden with the appropriate types in the
+DATA_DUMP environment variable in the format: ident=4,color=false
 
 =item C<indent>
 
