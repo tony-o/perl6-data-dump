@@ -60,11 +60,31 @@ if %*ENV{'DATA_DUMP'} {
   }
 }
 
-multi Dump (Mu $obj,  Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
+multi Dump (
+  Mu $obj,
+  Int :$indent?        = %defaults<indent>,
+  Int :$ilevel?        = %defaults<ilevel>,
+  Bool :$color?        = %defaults<color>,
+  Int :$max-recursion? = %defaults<max-recursion>,
+  Bool :$gist          = %defaults<gist>,
+  Bool :$skip-methods  = %defaults<skip-methods>,
+  Bool :$no-postfix    = %defaults<no-postfix>,
+  :%overrides where { !$_.values.grep: * !~~ Sub } = {},
+) is export {
   return $obj.gist;
 }
 
-multi Dump (Any $obj, Int :$indent? = 2, Int :$ilevel? = 0, Bool :$color? = True, Int :$max-recursion? = 50, Bool :$gist = False, Bool :$skip-methods = False, Bool :$no-postfix = False, :%overrides where { !$_.values.grep: * !~~ Sub } = {}, ) is export {
+multi Dump (
+  Any $obj,
+  Int :$indent?        = %defaults<indent>,
+  Int :$ilevel?        = %defaults<ilevel>,
+  Bool :$color?        = %defaults<color>,
+  Int :$max-recursion? = %defaults<max-recursion>,
+  Bool :$gist          = %defaults<gist>,
+  Bool :$skip-methods  = %defaults<skip-methods>,
+  Bool :$no-postfix    = %defaults<no-postfix>,
+  :%overrides where { !$_.values.grep: * !~~ Sub } = {},
+) is export {
   return '...' if $max-recursion == $ilevel;
   temp $colorizor = sub (Str $s) { '' } unless $color;
   try {
