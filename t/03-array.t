@@ -1,5 +1,6 @@
 #!/usr/bin/env perl6
 
+BEGIN { %*ENV<DATA_DUMP> = ''; }
 use Test;
 use Data::Dump;
 plan 1;
