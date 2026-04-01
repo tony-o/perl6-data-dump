@@ -126,16 +126,16 @@ multi Dump (
     $out ~= "{@($obj).elems > 0 ?? $space !! ' '}{sym(']')}\n";
   } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
     my $what = $obj.WHAT.^name;
-    $out ~= "{$space}{$obj.defined ?? val($obj.perl) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
+    $out ~= "{$space}{$obj.defined ?? val($obj.raku) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
   } elsif (Nil|Any) ~~ $obj.WHAT && !$gist {
     $out ~= $space ~ "({Nil ~~ $obj.WHAT ?? 'Nil' !! 'Any'})\n";
   } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
-    $out ~= $space ~ "{$obj.perl.subst(/'{' .+? $/, '')}\n";
+    $out ~= $space ~ "{$obj.raku.subst(/'{' .+? $/, '')}\n";
   } elsif Range ~~ $obj.WHAT && !$gist {
     $out ~= "{$space}{$obj.min}{$obj.excludes-min??'^'!!''}..{$obj.excludes-max??'^'!!''}{$obj.max}";
   } elsif $obj ~~ IO::Path && !$gist {
     my $what = $obj.WHAT.^name;
-    $out ~= “{$space}{val($obj.perl // '<undef>')}{$no-postfix ?? '' !! '.'~what($what)} :absolute("{$obj.absolute}")\n”;
+    $out ~= “{$space}{val($obj.raku // '<undef>')}{$no-postfix ?? '' !! '.'~what($what)} :absolute("{$obj.absolute}")\n”;
   } elsif $obj ~~ Match|Grammar && !$gist {
     $out ~= $space ~ sym("{$obj.^name} :: (") ~ "\n";
     my @props = qw<made pos hash from list orig>.grep({ $obj.^can($_) });
