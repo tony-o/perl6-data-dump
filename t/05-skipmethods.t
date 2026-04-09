@@ -15,15 +15,12 @@ class E {
   method e returns Int { say $!private; };
 };
 
-my $d;
-my $null-s = Dump($d, :!color);
-
 my $out = Dump(E.new, :color(False), :skip-methods);
 
-my $expected = chomp qq:to/EXPECT/;
+my $expected = chomp q:to/EXPECT/;
 E :: (
-  \$!private => 5.Int,
-  \$!public => $null-s,
+  $!private => 5.Int,
+  $!public => (Nil),
 
 )
 EXPECT

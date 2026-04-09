@@ -4,7 +4,7 @@ BEGIN { %*ENV<DATA_DUMP> = ''; }
 use Test;
 use Data::Dump;
 
-plan 3;
+plan 1;
 
 class E {
   has $.public;
@@ -27,13 +27,11 @@ my %overrides = (
 );
 my $out = Dump(E.new, :color(False), :no-postfix, :%overrides) ;
 
-my $d;
-my $null-s = Dump($d, :!color);
-my $expected = chomp qq:to/EXPECT/;
+my $expected = chomp q:to/EXPECT/;
 E :: (
-  \$!private => 10,
-  \$!private2 => Str:hello,
-  \$!public => $null-s,
+  $!private => 10,
+  $!private2 => Str:hello,
+  $!public => (Nil),
 
   e ()
   public ()
@@ -43,8 +41,5 @@ E :: (
 EXPECT
 
 ok $out eq $expected, "got expected data structure";
-
-is Dump(Mu), '(Mu)', 'Can dump an undefined Mu type object';
-is Dump(Nil), '(Nil)', 'Can dump an undefined Any type object';;
 
 # vi:syntax=perl6

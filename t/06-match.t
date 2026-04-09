@@ -8,15 +8,12 @@ plan 1;
 
 my $match = 'hello world' ~~ /'o w'/;
 
-my $d;
-my $null-s = Dump($d, :!color);
-
 my $out = Dump($match, :color(False), :skip-methods);
-my $expected = chomp qq:to/EXPECT/;
+my $expected = chomp q:to/EXPECT/;
 Match :: (
-  made => $null-s,
+  made => (Nil),
   pos  => 7.Int,
-  hash => \{ \},
+  hash => { },
   from => 4.Int,
   list => [ ],
   orig => "hello world".Str,
