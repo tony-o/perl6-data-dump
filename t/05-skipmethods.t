@@ -15,11 +15,20 @@ class E {
   method e returns Int { say $!private; };
 };
 
+my $d;
+my $null-s = Dump($d, :!color);
+
 my $out = Dump(E.new, :color(False), :skip-methods);
 
-my $expected = "E :: (\n  \$!private => 5.Int,\n  \$!public => (Nil),\n\n)";
+my $expected = chomp qq:to/EXPECT/;
+E :: (
+  \$!private => 5.Int,
+  \$!public => $null-s,
 
-ok $out eq $expected, "got expected data structure" or die $out;
+)
+EXPECT
+
+ok $out eq $expected, "got expected data structure";
 
 class F {
   has E $.e;
@@ -30,18 +39,17 @@ $out = Dump(F.new(:e(E.new)), :color(False), :skip-methods);
 
 $expected = "F :: (\n  \$!e => E :: (\n    \$!private => 5.Int,\n    \$!public => (Nil),\n\n  ),\n\n)";
 
-ok $out eq $expected, "got expected nested data structure" or die $out;
+ok $out eq $expected, "got expected nested data structure";
 
 role G {
   has $!g;
 }
 
-class H does G {
-}
+class H does G { }
 
 $expected = "H :: (\n  \$!g => undefined,\n\n)";
 $out = Dump(H, :!color, :skip-methods);
 
-ok $out eq $expected, "role stuff still is recognized in class" or die $out.perl;
+ok $out eq $expected, "role stuff still is recognized in class";
 
 # vi:syntax=perl6
