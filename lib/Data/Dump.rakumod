@@ -127,7 +127,7 @@ multi Dump (
   } elsif $obj.WHAT ~~ any(Int, Str, Rat, Numeric) && !$gist {
     my $what = $obj.WHAT.^name;
     $out ~= "{$space}{$obj.defined ?? val($obj.raku) ~ ($no-postfix ?? '' !! '.'~what($what)) !! what($what) ~ ':U' }\n";
-  } elsif (Nil|Any ~~ $obj.WHAT || ($*KERNEL.Str eq 'win32' && Nil|Any ~~ $obj && $obj !~~ Match)) && !$gist {
+  } elsif (($*KERNEL.Str eq 'win32' && !$obj.defined && Nil|Any ~~ $obj) || Nil|Any ~~ $obj.WHAT)  && $obj !~~ Match && !$gist {
     $out ~= $space ~ "({Nil ~~ ($*KERNEL.Str eq 'win32' ?? $obj !! $obj.WHAT) ?? 'Nil' !! 'Any'})\n";
   } elsif (Sub|Method) ~~ $obj.WHAT && !$gist {
     $out ~= $space ~ "{$obj.raku.subst(/'{' .+? $/, '')}\n";
